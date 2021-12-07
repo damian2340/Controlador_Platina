@@ -44,5 +44,8 @@ void rxTask();
 
 void txInitialize(txContext_t * txContext) ;
 void rxInitialize(rxContext_t * rxContext);
+void setKp(uint8_t eje, float value );
+void setKi(uint8_t eje, float value );
+void setKd(uint8_t eje, float value );
 
 #endif /* INC_SYSTEM_COMM_H_ */

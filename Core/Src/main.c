@@ -40,6 +40,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define COUNT_TO_VOLT (3.3/4096.0)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -50,12 +51,21 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-extern pid_t ejeX;
-extern pid_t ejeY;
-extern pid_t ejeZ;
+extern myPid_t ejeX;
+extern myPid_t ejeY;
+extern myPid_t ejeZ;
 extern ADC_HandleTypeDef hadc1;
 extern ADC_HandleTypeDef hadc2;
 volatile uint16_t adcValue[3];
+volatile float posicion[3];
+volatile float posicion0[3] = { 0, 0, 0 };
+volatile uint8_t isCloseLoop = 0;
+volatile float sgSenseX;
+volatile float sgSenseY;
+volatile float sgSenseZ;
+volatile float dVx;
+volatile float dVy;
+volatile float dVz;
 
 /* USER CODE END PV */
 
@@ -74,53 +84,60 @@ void SystemClock_Config(void);
  * @retval int
  */
 int main(void) {
-    /* USER CODE BEGIN 1 */
+	/* USER CODE BEGIN 1 */
 
-    /* USER CODE END 1 */
+	/* USER CODE END 1 */
 
-    /* MCU Configuration--------------------------------------------------------*/
+	/* MCU Configuration--------------------------------------------------------*/
 
-    /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-    HAL_Init();
+	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+	HAL_Init();
 
-    /* USER CODE BEGIN Init */
-    /* USER CODE END Init */
+	/* USER CODE BEGIN Init */
+	/* USER CODE END Init */
 
-    /* Configure the system clock */
-    SystemClock_Config();
+	/* Configure the system clock */
+	SystemClock_Config();
 
-    /* USER CODE BEGIN SysInit */
+	/* USER CODE BEGIN SysInit */
 
-    /* USER CODE END SysInit */
+	/* USER CODE END SysInit */
 
-    /* Initialize all configured peripherals */
-    MX_GPIO_Init();
-    MX_DMA_Init();
-    MX_ADC1_Init();
-    MX_USART2_UART_Init();
-    MX_ADC2_Init();
-    MX_HRTIM1_Init();
-    /* USER CODE BEGIN 2 */
+	/* Initialize all configured peripherals */
+	MX_GPIO_Init();
+	MX_DMA_Init();
+	MX_ADC1_Init();
+	MX_USART2_UART_Init();
+	MX_ADC2_Init();
+	MX_HRTIM1_Init();
+	/* USER CODE BEGIN 2 */
 
-    HAL_HRTIM_SimpleBaseStart(&hhrtim1, HRTIM_TIMERINDEX_MASTER);
+	sgSenseX = 40e-6 / 2.95;
+	sgSenseY = 40e-6 / 2.95;
+	sgSenseZ = 40e-6 / 2.95;
 
-    HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adcValue, 2);
-    HAL_ADC_Start(&hadc2);
+	dVx = COUNT_TO_VOLT * sgSenseX;
+	dVy = COUNT_TO_VOLT * sgSenseY;
+	dVz = COUNT_TO_VOLT * sgSenseZ;
 
-    receptionStart();
-    /* USER CODE END 2 */
+	HAL_HRTIM_SimpleBaseStart(&hhrtim1, HRTIM_TIMERINDEX_MASTER);
+	HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adcValue, 2);
+	HAL_ADC_Start(&hadc2);
 
-    /* Infinite loop */
-    /* USER CODE BEGIN WHILE */
-    while (1) {
-        txTask();
-        rxTask();
-        /* USER CODE END WHILE */
+	receptionStart();
+	/* USER CODE END 2 */
 
-        /* USER CODE BEGIN 3 */
+	/* Infinite loop */
+	/* USER CODE BEGIN WHILE */
+	while (1) {
+		txTask();
+		rxTask();
+		/* USER CODE END WHILE */
 
-    }
-    /* USER CODE END 3 */
+		/* USER CODE BEGIN 3 */
+
+	}
+	/* USER CODE END 3 */
 }
 
 /**
@@ -128,53 +145,58 @@ int main(void) {
  * @retval None
  */
 void SystemClock_Config(void) {
-    RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
-    RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
-    RCC_PeriphCLKInitTypeDef PeriphClkInit = { 0 };
+	RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
+	RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
+	RCC_PeriphCLKInitTypeDef PeriphClkInit = { 0 };
 
-    /** Initializes the RCC Oscillators according to the specified parameters
-     * in the RCC_OscInitTypeDef structure.
-     */
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-    RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-    RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL16;
-    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
-        Error_Handler();
-    }
-    /** Initializes the CPU, AHB and APB buses clocks
-     */
-    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
-    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+	/** Initializes the RCC Oscillators according to the specified parameters
+	 * in the RCC_OscInitTypeDef structure.
+	 */
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+	RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL16;
+	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+		Error_Handler();
+	}
+	/** Initializes the CPU, AHB and APB buses clocks
+	 */
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
+			| RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
-        Error_Handler();
-    }
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_HRTIM1 | RCC_PERIPHCLK_ADC12;
-    PeriphClkInit.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV1;
-    PeriphClkInit.Hrtim1ClockSelection = RCC_HRTIM1CLK_PLLCLK;
-    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
-        Error_Handler();
-    }
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
+		Error_Handler();
+	}
+	PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_HRTIM1
+			| RCC_PERIPHCLK_ADC12;
+	PeriphClkInit.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV1;
+	PeriphClkInit.Hrtim1ClockSelection = RCC_HRTIM1CLK_PLLCLK;
+	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
+		Error_Handler();
+	}
 }
 
 /* USER CODE BEGIN 4 */
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
-    adcValue[2] = HAL_ADC_GetValue(&hadc2);
-
-    /**
-     * Aca se puede actualizar periodicamente el pid
-     * pero primero se deveria pasar los count a metros.
-     * outputSetValue(pidUpdateInRuntime(ejeX, adcValue[0] );
-     */
-    outputSetValue('x', pidUpdateInRuntime(&ejeX, adcValue[0]));
-    outputSetValue('y', pidUpdateInRuntime(&ejeY, adcValue[1]));
-    outputSetValue('z', pidUpdateInRuntime(&ejeZ, adcValue[2]));
+	posicion[0] = posicion0[0] + adcValue[0] * dVx;
+	posicion[1] = posicion0[1] + adcValue[1] * dVy;
+	posicion[2] = posicion0[2] + HAL_ADC_GetValue(&hadc2) * dVz;
+	/**
+	 * Aca se puede actualizar periodicamente el pid
+	 * pero primero se deveria pasar los count a metros.
+	 * outputSetValue(pidUpdateInRuntime(ejeX, adcValue[0] );
+	 */
+	if (isCloseLoop != 0) {
+		outputSetValue('x', pidUpdateInRuntime(&ejeX, posicion[0]));
+		outputSetValue('y', pidUpdateInRuntime(&ejeY, posicion[1]));
+		outputSetValue('z', pidUpdateInRuntime(&ejeZ, posicion[2]));
+	}
 
 }
 
@@ -185,12 +207,12 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
  * @retval None
  */
 void Error_Handler(void) {
-    /* USER CODE BEGIN Error_Handler_Debug */
-    /* User can add his own implementation to report the HAL error return state */
-    __disable_irq();
-    while (1) {
-    }
-    /* USER CODE END Error_Handler_Debug */
+	/* USER CODE BEGIN Error_Handler_Debug */
+	/* User can add his own implementation to report the HAL error return state */
+	__disable_irq();
+	while (1) {
+	}
+	/* USER CODE END Error_Handler_Debug */
 }
 
 #ifdef  USE_FULL_ASSERT
@@ -202,10 +224,10 @@ void Error_Handler(void) {
  * @retval None
  */
 void assert_failed(uint8_t *file, uint32_t line) {
-    /* USER CODE BEGIN 6 */
-    /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-    /* USER CODE END 6 */
+	/* USER CODE BEGIN 6 */
+	/* User can add his own implementation to report the file name and line number,
+	 ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+	/* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
 

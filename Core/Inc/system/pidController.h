@@ -18,12 +18,12 @@ typedef struct PID{
         /*record*/
         float record[3];
         float output;
-        float target;
+        float setPoint;
 
-}pid_t;
+}myPid_t;
 
-void pidInt(pid_t* pid);
-void pidReset(pid_t* pid);
-float pidUpdateInRuntime(pid_t* pid, float feedBack);
+void pidInt(myPid_t* pid);
+void pidReset(myPid_t* pid);
+float pidUpdateInRuntime(myPid_t* pid, float feedBack);
 
 #endif /* INC_SYSTEM_PIDCONTROLLER_H_ */

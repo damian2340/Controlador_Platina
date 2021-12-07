@@ -45,7 +45,7 @@ Core/Src/%.o: ../Core/Src/%.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: MCU GCC Compiler'
 	@echo $(PWD)
-	arm-none-eabi-gcc -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -DUSE_HAL_DRIVER -DSTM32F334x8 -I"E:/Users/damian/Documents/Proyectos/Platina/controlador/Controlador_Platina/Core/Inc" -I"E:/Users/damian/Documents/Proyectos/Platina/controlador/Controlador_Platina/Drivers/STM32F3xx_HAL_Driver/Inc" -I"E:/Users/damian/Documents/Proyectos/Platina/controlador/Controlador_Platina/Drivers/STM32F3xx_HAL_Driver/Inc/Legacy" -I"E:/Users/damian/Documents/Proyectos/Platina/controlador/Controlador_Platina/Drivers/CMSIS/Device/ST/STM32F3xx/Include" -I"E:/Users/damian/Documents/Proyectos/Platina/controlador/Controlador_Platina/Drivers/CMSIS/Include"  -Og -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -o "$@" "$<"
+	arm-none-eabi-gcc -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -DUSE_HAL_DRIVER -DSTM32F334x8 -I"C:/Users/usuario/Documents/Controlador_platina/Controlador_Platina/Controlador_Platina/Core/Inc" -I"C:/Users/usuario/Documents/Controlador_platina/Controlador_Platina/Controlador_Platina/Drivers/STM32F3xx_HAL_Driver/Inc" -I"C:/Users/usuario/Documents/Controlador_platina/Controlador_Platina/Controlador_Platina/Drivers/STM32F3xx_HAL_Driver/Inc/Legacy" -I"C:/Users/usuario/Documents/Controlador_platina/Controlador_Platina/Controlador_Platina/Drivers/CMSIS/Device/ST/STM32F3xx/Include" -I"C:/Users/usuario/Documents/Controlador_platina/Controlador_Platina/Controlador_Platina/Drivers/CMSIS/Include"  -Og -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
