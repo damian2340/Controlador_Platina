@@ -2,7 +2,7 @@
 
 Controlador actuadores piezoelectricos basado en la placa Nucleo-F334R8 de ST e inversor de 150V
 
-Usando el periferico HRTIM se consiguen 5 señales cuadradas de frecuencia fija y moduladas por ancho de pulso.
+Usando el periferico HRTIM se consiguen 5 señales cuadradas de frecuencia fija de 80kHz y moduladas por ancho de pulso con una resolucion de 217pico segundos.
 
 Para controlar las tensiones de salida de los actuadores que mueven los ejes x e y se uso  una topologia Buck Multifase con 2 señales desfasadas 180° en cada salida.
 
